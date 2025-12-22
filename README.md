@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/cod.er.png" alt="cod.er logo" width="200">
+</p>
+
 # cod.er
 cod.er is an AI-powered coding agent that intelligently orchestrates a team of specialized AI agents to build, debug, and manage entire software projects from a single prompt, all within your terminal.
 
