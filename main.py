@@ -1,34 +1,16 @@
-from langchain_groq import ChatGroq
-from dotenv import load_dotenv
-import logging
+from langgraph.graph import StateGraph
+from src.app.nodes.tech_lead import tech_lead
+from src.app.schemas import State
 
-# Logging setup
-log_format = "%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s"
-date_format = "%Y-%m-%d %H:%M:%S"
+builder = StateGraph(State)
 
-logger = logging.getLogger("my_logger")
-logger.setLevel(logging.DEBUG)
+builder.add_node("tech_lead", tech_lead)
+builder.set_entry_point("tech_lead")
 
-file_handler = logging.FileHandler("app.log")
-file_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
+graph = builder.compile()
 
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
+result = graph.invoke(
+    {"requirements": "Hi, can you make a calculator app"}
+)
 
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
-
-# Load environment variables
-load_dotenv()
-
-# Initialize LLM
-try:
-    llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.3)
-    logger.info("ChatGroq model initialized successfully.")
-except Exception as e:
-    logger.error("Failed to initialize ChatGroq", exc_info=True)
-
-# Example invocation
-# response = llm.invoke("hey can you build me a calculator app in python?")
-# logger.info("Received response from model")
-# print(response.content)
+print(result)
