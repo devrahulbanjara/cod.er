@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Chat & Preview Interface</title>
+        <style>
+            :root {
+                /* Night Mode Colors */
+                --bg-color: #1e1e1e;
+                --sidebar-bg: #252526;
+                --text-color: #cccccc;
+                --border-color: #3e3e42;
+                --input-bg: #3c3c3c;
+                --input-focus-border: #007acc;
+                --btn-bg: #0e639c;
+                --btn-hover: #1177bb;
+                --msg-user-bg: #264f78;
+                --msg-bot-bg: #333333;
+                --scrollbar-thumb: #424242;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    Helvetica, Arial, sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .container {
+                display: flex;
+                height: 100%;
+                width: 100%;
+            }
+
+            /* --- Left Chat Section (1/3) --- */
+            .chat-container {
+                width: 33.33%;
+                min-width: 300px;
+                display: flex;
+                flex-direction: column;
+                background-color: var(--sidebar-bg);
+                border-right: 1px solid var(--border-color);
+            }
+
+            .chat-header {
+                padding: 15px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                border-bottom: 1px solid var(--border-color);
+                background-color: var(--sidebar-bg);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .chat-header img {
+                height: 32px;
+                width: auto;
+            }
+
+            .chat-history {
+                flex: 1;
+                padding: 20px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            /* Scrollbar Styling for Chat History */
+            .chat-history::-webkit-scrollbar {
+                width: 8px;
+            }
+            .chat-history::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .chat-history::-webkit-scrollbar-thumb {
+                background-color: var(--scrollbar-thumb);
+                border-radius: 4px;
+            }
+
+            .message {
+                max-width: 85%;
+                padding: 10px 14px;
+                border-radius: 8px;
+                line-height: 1.4;
+                font-size: 0.95rem;
+                position: relative;
+            }
+
+            .message.bot {
+                background-color: var(--msg-bot-bg);
+                align-self: flex-start;
+                border-bottom-left-radius: 2px;
+            }
+
+            .message.user {
+                background-color: var(--msg-user-bg);
+                align-self: flex-end;
+                border-bottom-right-radius: 2px;
+                color: #ffffff;
+            }
+
+            .chat-input-area {
+                padding: 15px;
+                background-color: var(--sidebar-bg);
+                border-top: 1px solid var(--border-color);
+                display: flex;
+                gap: 10px;
+            }
+
+            input[type="text"] {
+                flex: 1;
+                background-color: var(--input-bg);
+                border: 1px solid var(--border-color);
+                color: #ffffff;
+                padding: 10px 12px;
+                border-radius: 4px;
+                outline: none;
+                font-size: 0.95rem;
+                transition: border-color 0.2s;
+            }
+
+            input[type="text"]:focus {
+                border-color: var(--input-focus-border);
+            }
+
+            button.send-btn {
+                background-color: var(--btn-bg);
+                color: white;
+                border: none;
+                padding: 0 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: background-color 0.2s;
+            }
+
+            button.send-btn:hover {
+                background-color: var(--btn-hover);
+            }
+
+            /* --- Right Iframe Section (2/3) --- */
+            .iframe-container {
+                width: 66.67%;
+                height: 100%;
+                background-color: #ffffff; /* White bg for iframe content usually */
+            }
+
+            iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                display: block;
+            }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const chatHistory = document.querySelector('.chat-history');
+                const messageInput = document.querySelector('input[type="text"]');
+                const sendBtn = document.querySelector('.send-btn');
+
+                async function sendMessage() {
+                    const message = messageInput.value.trim();
+                    if (!message) return;
+
+                    // Add user message to chat
+                    const userMsg = document.createElement('div');
+                    userMsg.className = 'message user';
+                    userMsg.textContent = message;
+                    chatHistory.appendChild(userMsg);
+
+                    // Clear input
+                    messageInput.value = '';
+
+                    // Scroll to bottom
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                    try {
+                        // Send GET request to root route with message as query param
+                        const response = await fetch(`/?message=${encodeURIComponent(message)}`);
+                        const data = await response.json();
+
+                        // Add bot response to chat
+                        const botMsg = document.createElement('div');
+                        botMsg.className = 'message bot';
+                        botMsg.textContent = data.message || JSON.stringify(data);
+                        chatHistory.appendChild(botMsg);
+
+                        // Scroll to bottom
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    } catch (error) {
+                        console.error('Error:', error);
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'message bot';
+                        errorMsg.textContent = 'Error: Could not connect to server';
+                        chatHistory.appendChild(errorMsg);
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    }
+                }
+
+                // Send on button click
+                sendBtn.addEventListener('click', sendMessage);
+
+                // Send on Enter key
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Chat Interface -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <img src="docs/cod.er.png" alt="cod.er logo" />
+                </div>
+
+                <div class="chat-history">
+                    <!-- Example Messages -->
+                    <div class="message bot">
+                        Hello! I am your coding assistant. How can I help you
+                        with your project today?
+                    </div>
+                    <div class="message user">
+                        Can you show me the documentation for the API?
+                    </div>
+                    <div class="message bot">
+                        Certainly. I've loaded the documentation page in the
+                        preview pane on the right.
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input
+                        type="text"
+                        placeholder="Type your message..."
+                        aria-label="Message input"
+                    />
+                    <button class="send-btn">Send</button>
+                </div>
+            </div>
+
+            <!-- Iframe Content -->
+            <div class="iframe-container">
+                <iframe src="http://localhost:8000/page" title="Preview Window"></iframe>
+            </div>
+        </div>
+    </body>
+</html>
