@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+importtime.log
+.DS_Store
+*.xml
+.idea/
